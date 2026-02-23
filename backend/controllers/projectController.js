@@ -13,6 +13,10 @@ const createProject = async (req, res) => {
     return res.status(400).json({ message: 'Order number is required' });
   }
 
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ message: 'Project name is required' });
+  }
+
   try {
     const connection = await pool.getConnection();
     
@@ -23,14 +27,23 @@ const createProject = async (req, res) => {
 
     await connection.release();
 
+    console.log(`✅ Project created with ID: ${result.insertId} by user ${createdBy}`);
     res.status(201).json({
       message: 'Project created successfully',
       projectId: result.insertId
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('❌ Error creating project:', err.message);
+    
+    // Check for duplicate order number
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Order number already exists. Please use a unique order number.' });
+    }
+    
+    res.status(500).json({ message: 'Failed to create project. Please check the form data and try again.', error: err.message });
   }
 };
+
 
 const getAllProjects = async (req, res) => {
   try {
