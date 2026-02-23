@@ -1,0 +1,70 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gradient-to-br from-dark-sidebar via-dark-bg to-dark-bg text-text-primary font-inter;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-card rounded-lg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-accent-teal rounded-lg hover:bg-accent-teal-hover;
+}
+
+/* Smooth Transitions */
+@layer components {
+  .transition-smooth {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .card-base {
+    @apply bg-dark-card border border-dark-border rounded-2xl p-6 shadow-lg transition-smooth hover:shadow-xl hover:bg-dark-card-hover;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-accent-teal text-dark-sidebar font-medium rounded-lg transition-smooth hover:bg-accent-teal-hover hover:scale-105 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-dark-card border border-dark-border text-text-primary font-medium rounded-lg transition-smooth hover:bg-dark-card-hover;
+  }
+
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-xs font-semibold transition-smooth;
+  }
+
+  .status-todo {
+    @apply bg-blue-500/20 text-status-todo border border-status-todo/30;
+  }
+
+  .status-in-progress {
+    @apply bg-orange-500/20 text-status-in-progress border border-status-in-progress/30;
+  }
+
+  .status-completed {
+    @apply bg-green-500/20 text-status-completed border border-status-completed/30;
+  }
+
+  .status-overdue {
+    @apply bg-red-500/20 text-status-overdue border border-status-overdue/30;
+  }
+}

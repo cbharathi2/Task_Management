@@ -1,0 +1,236 @@
+import React, { useState, useRef } from 'react';
+import { FiX, FiUpload, FiTrash2 } from 'react-icons/fi';
+import api from '../../services/api';
+import { fileService } from '../../services/fileService';
+
+const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    orderNumber: '',
+  });
+  const [attachments, setAttachments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter((file) => {
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      if (!validTypes.includes(file.type)) {
+        alert(`Invalid file type: ${file.name}. Only PDF, DOC, DOCX, and TXT are allowed.`);
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File too large: ${file.name}. Max size is 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    setAttachments((prev) => [...prev, ...validFiles]);
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('📝 Creating project with data:', formData);
+
+      const projectResponse = await api.post('/projects', formData);
+      const projectId = projectResponse.data.projectId;
+
+      console.log('✅ Project created with ID:', projectId);
+
+      // Upload attachments
+      if (attachments.length > 0) {
+        console.log('📂 Uploading', attachments.length, 'attachments...');
+        for (const file of attachments) {
+          try {
+            await fileService.uploadFile(file, 'project', projectId);
+          } catch (fileError) {
+            console.error('❌ Error uploading file:', file.name, fileError);
+          }
+        }
+      }
+
+      console.log('✅ Project and attachments created successfully');
+      alert('Project created successfully!');
+      onProjectCreated();
+      handleClose();
+    } catch (err) {
+      console.error('❌ Error creating project:', err);
+      setError(err.response?.data?.message || 'Failed to create project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({ name: '', description: '', orderNumber: '' });
+    setAttachments([]);
+    setError(null);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-dark-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-dark-border">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-dark-border sticky top-0 bg-dark-card">
+          <h2 className="text-2xl font-bold text-text-primary">Create New Project</h2>
+          <button
+            onClick={handleClose}
+            className="p-2 hover:bg-dark-card-hover rounded-lg transition-smooth"
+          >
+            <FiX size={24} className="text-text-secondary" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Project Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Enter project name"
+              required
+              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Enter project description"
+              rows="4"
+              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth resize-none"
+            />
+          </div>
+
+          {/* Order Number */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Order Number *
+            </label>
+            <input
+              type="text"
+              name="orderNumber"
+              value={formData.orderNumber}
+              onChange={handleInputChange}
+              placeholder="Enter order number"
+              required
+              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+            />
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Attach Files (PDF, DOC, DOCX, TXT - Max 5MB each)
+            </label>
+            <div className="flex gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.txt"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 px-4 py-2 bg-dark-bg border border-dashed border-accent-teal rounded-lg text-accent-teal hover:bg-dark-card-hover transition-smooth flex items-center justify-center gap-2"
+              >
+                <FiUpload size={18} />
+                Choose Files
+              </button>
+            </div>
+
+            {attachments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-text-muted">{attachments.length} file(s) selected:</p>
+                {attachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-dark-bg border border-dark-border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-text-primary font-medium">{file.name}</p>
+                      <p className="text-xs text-text-muted">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(index)}
+                      className="p-2 hover:bg-red-500/10 rounded-lg transition-smooth"
+                    >
+                      <FiTrash2 size={16} className="text-red-400" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4 border-t border-dark-border">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !formData.name}
+              className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating...' : 'Create Project'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default CreateProjectModal;

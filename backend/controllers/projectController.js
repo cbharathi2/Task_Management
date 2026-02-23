@@ -1,0 +1,130 @@
+const pool = require('../config/database');
+
+const createProject = async (req, res) => {
+  const { name, description, orderNumber } = req.body;
+  const createdBy = req.user.id;
+
+  // Only admins can create projects
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Only admins can create projects' });
+  }
+
+  if (!orderNumber || orderNumber.trim() === '') {
+    return res.status(400).json({ message: 'Order number is required' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    
+    const [result] = await connection.query(
+      'INSERT INTO projects (name, description, order_number, created_by) VALUES (?, ?, ?, ?)',
+      [name, description, orderNumber, createdBy]
+    );
+
+    await connection.release();
+
+    res.status(201).json({
+      message: 'Project created successfully',
+      projectId: result.insertId
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const getAllProjects = async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    
+    const [projects] = await connection.query(
+      `SELECT p.*, COUNT(t.id) as task_count FROM projects p
+       LEFT JOIN tasks t ON p.id = t.project_id
+       GROUP BY p.id
+       ORDER BY p.created_at DESC`
+    );
+
+    await connection.release();
+
+    res.json({ projects });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const updateProject = async (req, res) => {
+  const projectId = req.params.id;
+  const updates = req.body;
+
+  try {
+    const connection = await pool.getConnection();
+    
+    // Build dynamic query based on what's being updated
+    const allowedFields = ['name', 'description', 'status'];
+    const fields = Object.keys(updates)
+      .filter(key => allowedFields.includes(key))
+      .map(key => `${key} = ?`);
+    
+    if (fields.length === 0) {
+      await connection.release();
+      return res.status(400).json({ message: 'No valid fields to update' });
+    }
+    
+    const values = Object.keys(updates)
+      .filter(key => allowedFields.includes(key))
+      .map(key => updates[key]);
+    
+    values.push(projectId);
+    
+    await connection.query(
+      `UPDATE projects SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    await connection.release();
+
+    res.json({ message: 'Project updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const deleteProject = async (req, res) => {
+  const projectId = req.params.id;
+  const userId = req.user.id;
+
+  // Only admins can delete projects
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Only admins can delete projects' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    
+    // Verify project exists
+    const [project] = await connection.query('SELECT * FROM projects WHERE id = ?', [projectId]);
+    
+    if (!project.length) {
+      await connection.release();
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    console.log(`🗑️ Deleting project ${projectId}`);
+    
+    await connection.query('DELETE FROM projects WHERE id = ?', [projectId]);
+
+    await connection.release();
+
+    console.log(`✅ Project ${projectId} deleted successfully`);
+    res.json({ message: 'Project deleted successfully' });
+  } catch (err) {
+    console.error('❌ Error deleting project:', err.message);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = {
+  createProject,
+  getAllProjects,
+  updateProject,
+  deleteProject
+};
