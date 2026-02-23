@@ -49,11 +49,33 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     setLoading(true);
     setError(null);
 
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Project name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.orderNumber.trim()) {
+      setError('Order number is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('📝 Creating project with data:', formData);
 
       const projectResponse = await api.post('/projects', formData);
+      console.log('📦 API Response:', projectResponse.data);
+      
       const projectId = projectResponse.data.projectId;
+      
+      if (!projectId) {
+        console.error('❌ No projectId in response:', projectResponse.data);
+        setError('Failed to create project: Invalid server response');
+        setLoading(false);
+        return;
+      }
 
       console.log('✅ Project created with ID:', projectId);
 
@@ -63,20 +85,48 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
         for (const file of attachments) {
           try {
             await fileService.uploadFile(file, 'project', projectId);
+            console.log('✅ File uploaded:', file.name);
           } catch (fileError) {
-            console.error('❌ Error uploading file:', file.name, fileError);
+            console.error('⚠️  Error uploading file:', file.name, fileError);
+            // Don't fail the whole process if file upload fails
           }
         }
       }
 
-      console.log('✅ Project and attachments created successfully');
+      console.log('✅ Project created successfully');
+      setLoading(false);
       alert('Project created successfully!');
-      onProjectCreated();
+      
+      // Refresh projects list
+      try {
+        await onProjectCreated();
+      } catch (refreshError) {
+        console.error('⚠️  Error refreshing projects list:', refreshError);
+        // Still close the modal even if refresh fails
+      }
+      
       handleClose();
+      return; // Exit after successful creation
     } catch (err) {
       console.error('❌ Error creating project:', err);
-      setError(err.response?.data?.message || 'Failed to create project');
-    } finally {
+      console.error('Error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
+      
+      // Handle specific error responses
+      if (err.response?.status === 403) {
+        setError('You do not have permission to create projects. Only admins can create projects.');
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || 'Invalid project data. Please check all fields.');
+      } else if (err.response?.status === 409 || err.response?.data?.message?.includes('Duplicate')) {
+        setError('This order number already exists. Please use a unique order number.');
+      } else if (err.response?.status === 500) {
+        setError('Server error. Please check your form data and try again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to create project. Please try again.');
+      }
       setLoading(false);
     }
   };
@@ -85,6 +135,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     setFormData({ name: '', description: '', orderNumber: '' });
     setAttachments([]);
     setError(null);
+    setLoading(false);
     onClose();
   };
 

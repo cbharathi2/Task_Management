@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiCheckCircle, FiBarChart2, FiTarget, FiFolder, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiCheckCircle, FiBarChart2, FiTarget, FiFolder, FiUsers, FiLogOut } from 'react-icons/fi';
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
@@ -13,7 +13,8 @@ const navItems = [
   { path: '/my-tasks', label: 'My Tasks', icon: FiCheckCircle },
   { path: '/reporting', label: 'Reporting', icon: FiBarChart2 },
   { path: '/goals', label: 'Goals', icon: FiTarget },
-  { path: '/projects', label: 'Projects', icon: FiFolder }, // <-- fixed here
+  { path: '/projects', label: 'Projects', icon: FiFolder },
+  { path: '/teams', label: 'Teams', icon: FiUsers },
 ];
 
   const isActive = (path) => location.pathname === path;
