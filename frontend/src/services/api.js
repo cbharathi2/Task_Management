@@ -8,7 +8,7 @@ const getBackendURL = () => {
     return envApiUrl;
   }
 
-  return 'https://task-management-n0t49z1po-cbharathi2s-projects.vercel.app/api';
+  return 'https://task-management-qkrn4cgkp-cbharathi2s-projects.vercel.app/api';
 };
 
 const API_BASE_URL = getBackendURL();
