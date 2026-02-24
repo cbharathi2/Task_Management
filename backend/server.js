@@ -47,13 +47,22 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('public'));
 
-// Database readiness check middleware
-app.use((req, res, next) => {
-  if (!dbInitialized && req.path.startsWith('/api/') && req.path !== '/api/health') {
-    return res.status(503).json({ 
-      message: 'Database not ready yet',
-      error: 'Processing: Database initialization in progress'
-    });
+// Database readiness check middleware - ensures DB is initialized before handling requests
+app.use(async (req, res, next) => {
+  // If database not initialized, initialize it now (Vercel cold start handling)
+  if (!dbInitialized) {
+    try {
+      await ensureDatabaseInitialized();
+    } catch (error) {
+      console.error('❌ Middleware: Database initialization failed:', error.message);
+      // Don't block health check from reporting status
+      if (req.path !== '/api/health') {
+        return res.status(503).json({ 
+          message: 'Database initialization failed',
+          error: error.message
+        });
+      }
+    }
   }
   next();
 });
@@ -111,9 +120,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
-// Initialize database before accepting requests
+// On Vercel, the middleware will initialize DB on first request
+// On local, initialize immediately before listening
 if (process.env.VERCEL !== '1') {
   app.listen(PORT, async () => {
     console.log(`✅ Server running on port ${PORT}`);
@@ -127,14 +135,6 @@ if (process.env.VERCEL !== '1') {
       console.error('Stack:', error.stack);
       process.exit(1); // Don't continue if DB init fails
     }
-  });
-}
-
-// On Vercel, initialize DB before first request
-if (process.env.VERCEL === '1') {
-  ensureDatabaseInitialized().catch((error) => {
-    console.error('❌ Vercel: Database initialization failed:', error.message);
-    console.error('Stack:', error.stack);
   });
 }
 
