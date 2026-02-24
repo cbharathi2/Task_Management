@@ -4,9 +4,10 @@
 
 ### Backend Prerequisites
 - [ ] PostgreSQL database created (Render/Neon/Supabase)
-- [ ] Database schema installed (run SQL from `DEPLOY_VERCEL.md`)
 - [ ] `DATABASE_URL` connection string copied
 - [ ] JWT secret generated (`openssl rand -base64 32`)
+
+**Note:** Schema auto-creates on first deploy - no manual SQL needed!
 
 ### Frontend Prerequisites
 - [ ] Backend deployed first (needed for `VITE_API_BASE_URL`)

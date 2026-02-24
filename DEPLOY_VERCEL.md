@@ -108,79 +108,29 @@ After frontend deploys successfully:
 
 ## Database Schema Setup
 
-Your Postgres database needs base tables before first deploy. Run this SQL in your database:
+✅ **No manual SQL required!**  
 
-```sql
--- Users table
-CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(50) DEFAULT 'employee',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+The backend automatically creates all tables on first startup via `initDatabase.js`.
 
--- Tasks table
-CREATE TABLE IF NOT EXISTS tasks (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  priority VARCHAR(50) DEFAULT 'Medium',
-  status VARCHAR(50) DEFAULT 'To-Do',
-  due_date DATE,
-  assigned_to INT,
-  assigned_by INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
-  FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE CASCADE
-);
+Just ensure your PostgreSQL database exists and is accessible via `DATABASE_URL`. The app will:
+1. Create all base tables (users, tasks, goals, projects, attachments)
+2. Create teams and team_members tables
+3. Add extension columns (team_id, project_id, order_number)
+4. Set up all foreign key constraints
 
--- Goals table
-CREATE TABLE IF NOT EXISTS goals (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  owner_id INT NOT NULL,
-  target_date DATE,
-  progress INT DEFAULT 0,
-  status VARCHAR(50) DEFAULT 'active',
-  goal_type VARCHAR(50) DEFAULT 'personal',
-  created_by INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
-);
-
--- Projects table
-CREATE TABLE IF NOT EXISTS projects (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  status VARCHAR(50) DEFAULT 'active',
-  created_by INT NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Attachments table
-CREATE TABLE IF NOT EXISTS attachments (
-  id SERIAL PRIMARY KEY,
-  entity_type VARCHAR(50) NOT NULL,
-  entity_id INT NOT NULL,
-  file_name VARCHAR(255) NOT NULL,
-  file_path VARCHAR(500) NOT NULL,
-  file_size INT,
-  file_type VARCHAR(100),
-  uploaded_by INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL
-);
-
--- Teams and team_members tables are created automatically by initDatabase
+**First deployment will show:**
+```
+✅ Users table created/verified
+✅ Projects table created/verified
+✅ Goals table created/verified
+✅ Tasks table created/verified
+✅ Attachments table created/verified
+✅ Teams table created/verified
+✅ Team members table created/verified
+✅ Database schema initialized successfully
 ```
 
-Run this in your Render/Neon/Supabase SQL editor **before** deploying backend.
+**Subsequent deployments** skip existing tables (idempotent - safe to run multiple times).
 
 ---
 

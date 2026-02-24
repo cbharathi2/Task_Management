@@ -47,19 +47,42 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static('public'));
 
+// Database readiness check middleware
+app.use((req, res, next) => {
+  if (!dbInitialized && req.path.startsWith('/api/') && req.path !== '/api/health') {
+    return res.status(503).json({ 
+      message: 'Database not ready yet',
+      error: 'Processing: Database initialization in progress'
+    });
+  }
+  next();
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
     message: '✅ Task Management Backend API', 
     version: '1.0.0',
     status: 'running',
+    dbInitialized: dbInitialized,
     timestamp: new Date().toISOString()
   });
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
+  if (!dbInitialized) {
+    return res.status(503).json({ 
+      status: 'Database initialization in progress or failed',
+      dbInitialized: false,
+      timestamp: new Date().toISOString()
+    });
+  }
+  res.json({ 
+    status: 'Server is running', 
+    dbInitialized: true,
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // Routes
@@ -90,18 +113,29 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Initialize database before accepting requests
 if (process.env.VERCEL !== '1') {
   app.listen(PORT, async () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`🗄️  Database: ${process.env.PGDATABASE || process.env.DB_NAME} @ ${process.env.PGHOST || process.env.DB_HOST}`);
 
-    // Initialize database tables
-    await ensureDatabaseInitialized();
+    try {
+      await ensureDatabaseInitialized();
+      console.log('✅ Database initialized successfully');
+    } catch (error) {
+      console.error('❌ Database initialization failed:', error.message);
+      console.error('Stack:', error.stack);
+      process.exit(1); // Don't continue if DB init fails
+    }
   });
 }
 
-ensureDatabaseInitialized().catch((error) => {
-  console.error('⚠️  Database initialization warning:', error.message);
-});
+// On Vercel, initialize DB before first request
+if (process.env.VERCEL === '1') {
+  ensureDatabaseInitialized().catch((error) => {
+    console.error('❌ Vercel: Database initialization failed:', error.message);
+    console.error('Stack:', error.stack);
+  });
+}
 
 module.exports = app;
