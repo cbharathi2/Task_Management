@@ -12,9 +12,36 @@ const initializeDatabase = require('./config/initDatabase');
 
 const app = express();
 
+let dbInitialized = false;
+
+const getAllowedOrigins = () => {
+  const defaultOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:3000',
+  ];
+
+  const envOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return [...new Set([...defaultOrigins, ...envOrigins])];
+};
+
+const ensureDatabaseInitialized = async () => {
+  if (dbInitialized) {
+    return;
+  }
+
+  await initializeDatabase();
+  dbInitialized = true;
+};
+
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000'],
+  origin: getAllowedOrigins(),
   credentials: true
 }));
 app.use(express.json());
@@ -62,10 +89,19 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🗄️  Database: ${process.env.DB_NAME} @ ${process.env.DB_HOST}`);
-  
-  // Initialize database tables
-  await initializeDatabase();
+
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, async () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🗄️  Database: ${process.env.PGDATABASE || process.env.DB_NAME} @ ${process.env.PGHOST || process.env.DB_HOST}`);
+
+    // Initialize database tables
+    await ensureDatabaseInitialized();
+  });
+}
+
+ensureDatabaseInitialized().catch((error) => {
+  console.error('⚠️  Database initialization warning:', error.message);
 });
+
+module.exports = app;

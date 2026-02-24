@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// Auto-detect backend URL based on environment
+// API URL comes from environment in production; localhost fallback for local development
 const getBackendURL = () => {
-  // In development, try to connect to localhost:5000
+  const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+
   return 'http://localhost:5000/api';
 };
 
