@@ -16,12 +16,9 @@ let dbInitialized = false;
 
 const getAllowedOrigins = () => {
   const defaultOrigins = [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:5175',
-    'http://localhost:3000',
+    'https://task-management-wzap.vercel.app'
   ];
-
+  
   const envOrigins = (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
