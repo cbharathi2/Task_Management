@@ -1,0 +1,9 @@
+# This file ensures the uploads directory is tracked by git
+# and persists on Vercel even after deployments.
+# 
+# Note: Vercel's serverless filesystem is ephemeral between deployments.
+# For production use, consider migrating to external storage:
+# - Vercel Blob (vercel.com/blob)
+# - AWS S3
+# - Cloudinary
+# - Firebase Storage
