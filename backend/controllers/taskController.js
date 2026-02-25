@@ -266,7 +266,7 @@ const getDashboardStats = async (req, res) => {
     );
 
     const [recentlyAssigned] = await connection.query(
-      `SELECT COUNT(DISTINCT t.id) as count FROM tasks t ${joinClause} WHERE ${whereClause} ORDER BY t.created_at DESC LIMIT 10`,
+      `SELECT LEAST(COUNT(DISTINCT t.id), 10) as count FROM tasks t ${joinClause} WHERE ${whereClause}`,
       params
     );
 

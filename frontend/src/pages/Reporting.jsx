@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { taskService } from '../services/taskService';
+import { reportingService } from '../services/reportingService';
 import TaskCategoryChart from '../components/Charts/TaskCategoryChart';
 import CompletionStatusChart from '../components/Charts/CompletionStatusChart';
 import TaskCompletionTrendChart from '../components/Charts/TaskCompletionTrendChart';
@@ -18,8 +18,8 @@ const Reporting = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await taskService.getDashboardStats();
-      setStats(response.data.stats);
+      const dashboardStats = await reportingService.getDashboardStats();
+      setStats(dashboardStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
@@ -46,18 +46,13 @@ const Reporting = () => {
     );
   }
 
-  // Prepare chart data
-  const taskStats = [
-    { name: 'Completed', value: stats.totalCompleted || 0 },
-    { name: 'Incomplete', value: stats.totalIncomplete || 0 },
-    { name: 'Overdue', value: stats.totalOverdue || 0 },
-  ];
-
-  const completionData = {
-    Completed: stats.totalCompleted || 0,
-    'In Progress': Math.max(0, (stats.totalIncomplete || 0) - (stats.totalOverdue || 0)),
-    Overdue: stats.totalOverdue || 0,
-  };
+  const completionStatusData = Array.isArray(stats.completionStatusUpcomingMonth) && stats.completionStatusUpcomingMonth.length > 0
+    ? stats.completionStatusUpcomingMonth
+    : [
+        { status: 'Completed', count: stats.totalCompleted || 0 },
+        { status: 'In Progress', count: Math.max(0, (stats.totalIncomplete || 0) - (stats.totalOverdue || 0)) },
+        { status: 'Overdue', count: stats.totalOverdue || 0 },
+      ];
 
   return (
     <div className="ml-64 pt-24 px-8 pb-12">
@@ -126,7 +121,7 @@ const Reporting = () => {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <TaskCategoryChart data={stats} />
-          <CompletionStatusChart data={stats.completionStatusUpcomingMonth} />
+          <CompletionStatusChart data={completionStatusData} />
         </div>
 
         <TaskCompletionTrendChart data={stats.taskCompletionOverTime} />

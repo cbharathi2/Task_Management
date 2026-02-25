@@ -15,6 +15,7 @@ router.post('/', verifyToken, createTask);
 router.get('/my', verifyToken, getMyTasks);
 router.get('/assigned-by-me', verifyToken, getTasksAssignedByMe);
 router.get('/dashboard-stats', verifyToken, getDashboardStats);
+router.get('/reporting-stats', verifyToken, getDashboardStats);
 router.put('/:id', verifyToken, updateTask);
 router.delete('/:id', verifyToken, deleteTask);
 

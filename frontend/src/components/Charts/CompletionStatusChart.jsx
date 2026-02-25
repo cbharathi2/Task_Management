@@ -2,15 +2,18 @@ import React from 'react';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 
 const CompletionStatusChart = ({ data }) => {
-  const chartData = data.map((item) => ({
+  const safeData = Array.isArray(data) ? data : [];
+
+  const chartData = safeData.map((item) => ({
     name: item.status,
     value: item.count,
-  })) || [];
+  }));
 
   const COLORS = {
     'To-Do': '#3B82F6',
     'In Progress': '#F59E0B',
     'Completed': '#10B981',
+    'Overdue': '#EF4444',
   };
 
   return (

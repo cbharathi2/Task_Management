@@ -11,11 +11,13 @@ import {
 } from 'recharts';
 
 const TaskCompletionTrendChart = ({ data }) => {
-  const chartData = data.map((item) => ({
+  const safeData = Array.isArray(data) ? data : [];
+
+  const chartData = safeData.map((item) => ({
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     Total: item.total || 0,
     Completed: item.completed || 0,
-  })) || [];
+  }));
 
   return (
     <div className="card-base">
