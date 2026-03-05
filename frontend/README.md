@@ -1,16 +1,52 @@
-# React + Vite
+# Task Management Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend for the Task Management Dashboard.
 
-Currently, two official plugins are available:
+## Local Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
+- Node.js 18+
+- Backend API running on `http://localhost:5000`
 
-## React Compiler
+### Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Install dependencies:
+	```bash
+	npm install
+	```
 
-## Expanding the ESLint configuration
+2. Create local environment file:
+	```bash
+	cp .env.example .env
+	```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. Start development server:
+	```bash
+	npm run dev
+	```
+
+Frontend runs at `http://localhost:5173`.
+
+## Production Deployment (Vercel)
+
+1. Import repository in Vercel
+2. Set **Root Directory** to `frontend`
+3. Set environment variable:
+
+	```bash
+	VITE_API_BASE_URL=https://<your-backend-domain>/api
+	```
+
+4. Deploy
+
+## Build
+
+```bash
+npm run build
+```
+
+## Notes
+
+- `VITE_API_BASE_URL` is used when defined
+- Local fallback API URL is `http://localhost:5000/api`
+- Production fallback API URL points to the currently deployed backend

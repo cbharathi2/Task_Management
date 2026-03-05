@@ -2,10 +2,14 @@ import axios from 'axios';
 
 // API URL comes from environment in production; localhost fallback for local development
 const getBackendURL = () => {
-  const envApiUrl = import.meta.env.VITE_API_BASE_URL;
+  const envApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 
   if (envApiUrl) {
-    return envApiUrl;
+    return envApiUrl.replace(/\/$/, '');
+  }
+
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000/api';
   }
 
   return 'https://task-management-qkrn4cgkp-cbharathi2s-projects.vercel.app/api';

@@ -10,13 +10,17 @@ const fileRoutes = require('./routes/files');
 const teamRoutes = require('./routes/teams');
 const initializeDatabase = require('./config/initDatabase');
 
+const PORT = process.env.PORT || 5000;
+
 const app = express();
 
 let dbInitialized = false;
 
 const getAllowedOrigins = () => {
   const defaultOrigins = [
-    'https://task-management-wzap.vercel.app'
+    'https://task-management-wzap.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
   ];
   
   const envOrigins = (process.env.CORS_ORIGINS || '')
