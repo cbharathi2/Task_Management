@@ -173,11 +173,11 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-dark-border">
+    <div className="modal-shell">
+      <div className="modal-card max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-dark-border sticky top-0 bg-dark-card">
-          <h2 className="text-2xl font-bold text-text-primary">{project ? 'Edit Project' : 'Create New Project'}</h2>
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-dark-border sticky top-0 bg-dark-card">
+          <h2 className="text-xl sm:text-2xl font-bold text-text-primary">{project ? 'Edit Project' : 'Create New Project'}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-dark-card-hover rounded-lg transition-smooth"
@@ -187,9 +187,9 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
           {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+            <div className="p-4 bg-accent-teal/15 border border-accent-teal/35 rounded-lg text-text-primary text-sm">
               {error}
             </div>
           )}
@@ -206,7 +206,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
               onChange={handleInputChange}
               placeholder="Enter project name"
               required
-              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+              className="surface-input"
             />
           </div>
 
@@ -221,7 +221,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
               onChange={handleInputChange}
               placeholder="Enter project description"
               rows="4"
-              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth resize-none"
+              className="surface-input resize-none"
             />
           </div>
 
@@ -237,7 +237,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
               onChange={handleInputChange}
               placeholder="Enter order number"
               required
-              className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+              className="surface-input"
             />
           </div>
 
@@ -258,7 +258,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-1 px-4 py-2 bg-dark-bg border border-dashed border-accent-teal rounded-lg text-accent-teal hover:bg-dark-card-hover transition-smooth flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-dark-bg border border-dashed border-accent-teal/60 rounded-xl text-accent-teal hover:bg-dark-card-hover transition-smooth flex items-center justify-center gap-2"
               >
                 <FiUpload size={18} />
                 Choose Files
@@ -282,9 +282,9 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
                     <button
                       type="button"
                       onClick={() => removeAttachment(index)}
-                      className="p-2 hover:bg-red-500/10 rounded-lg transition-smooth"
+                      className="p-2 hover:bg-accent-teal/15 rounded-lg transition-smooth"
                     >
-                      <FiTrash2 size={16} className="text-red-400" />
+                      <FiTrash2 size={16} className="text-text-primary" />
                     </button>
                   </div>
                 ))}
@@ -293,7 +293,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-dark-border">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-dark-border">
             <button
               type="button"
               onClick={handleClose}

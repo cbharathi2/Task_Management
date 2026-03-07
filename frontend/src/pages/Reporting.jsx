@@ -38,7 +38,7 @@ const Reporting = () => {
 
   if (loading || !stats) {
     return (
-      <div className="ml-64 pt-24 px-8 pb-12">
+      <div className="page-shell">
         <div className="text-center py-12 text-text-secondary">
           {loading ? 'Loading analytics...' : 'No statistics available'}
         </div>
@@ -56,12 +56,12 @@ const Reporting = () => {
       ];
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-text-primary">Analytics Dashboard</h1>
+    <div className="page-shell">
+      <div className="page-header mb-8">
+        <h1 className="page-title">Analytics Dashboard</h1>
         <button
           onClick={exportPDF}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Download size={18} />
           Export PDF
@@ -115,7 +115,7 @@ const Reporting = () => {
           
           <div className="card-base">
             <p className="text-text-muted text-sm mb-3">🎯 Do Later</p>
-            <p className="text-3xl font-bold text-purple-400">{stats.doLaterCount || 0}</p>
+            <p className="text-3xl font-bold text-cyan-400">{stats.doLaterCount || 0}</p>
           </div>
         </div>
 

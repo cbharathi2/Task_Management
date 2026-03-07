@@ -220,7 +220,7 @@ const ProjectCard = ({ project, onDelete, onStatusChange, isCompleted }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {user?.role === 'employee' && !isCompleted && (
             <button
               onClick={handleMarkComplete}
@@ -251,13 +251,13 @@ const ProjectCard = ({ project, onDelete, onStatusChange, isCompleted }) => {
         </div>
       </div>
 
-      <p className="text-text-secondary text-sm mb-4 line-clamp-2">
+      <p className="text-text-secondary text-sm mb-4 line-clamp-3">
         {project.description || 'No description'}
       </p>
 
       {/* tasks section */}
       <div className="border-t border-dark-border pt-3 mt-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => setShowTasks(!showTasks)}
             className="flex items-center gap-2 text-xs text-accent-teal hover:text-accent-teal/80 transition-smooth"
@@ -298,7 +298,7 @@ const ProjectCard = ({ project, onDelete, onStatusChange, isCompleted }) => {
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-text-muted">Order No</span>
           <span className="px-2 py-1 bg-accent-teal/10 text-accent-teal rounded text-xs font-medium">
             {project.order_number || 'N/A'}
@@ -361,7 +361,7 @@ const ProjectCard = ({ project, onDelete, onStatusChange, isCompleted }) => {
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {comments.length > 0 ? (
               comments.map(c => (
-                <div key={c.id} className="p-2 bg-dark-card-hover rounded space-y-2">
+                <div key={c.id} className="p-2 sm:p-3 bg-dark-card-hover rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-text-primary">{c.user_name} <span className="text-text-secondary text-[10px]">({c.user_role})</span></p>
                     {(user?.id === c.user_id || user?.role === 'admin') && (

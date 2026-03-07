@@ -144,14 +144,14 @@ const Teams = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-text-secondary">Loading teams...</div>;
+    return <div className="page-shell text-center py-12 text-text-secondary">Loading teams...</div>;
   }
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12 space-y-8">
+    <div className="page-shell space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-text-primary mb-2">Teams</h1>
+        <h1 className="page-title mb-2">Teams</h1>
         <p className="text-text-secondary">Manage and view team information</p>
       </div>
 
@@ -159,7 +159,7 @@ const Teams = () => {
       {can('create', 'team') && (
         <button
           onClick={openCreateModal}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <FiPlus size={18} />
           Create Team
@@ -277,10 +277,10 @@ const TeamDetailsModal = ({ team, onClose, onRefresh }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-card rounded-2xl max-w-2xl w-full border border-dark-border">
-        <div className="flex items-center justify-between p-6 border-b border-dark-border">
-          <h2 className="text-2xl font-bold text-text-primary">{team.name} - Team Details</h2>
+    <div className="modal-shell">
+      <div className="modal-card max-w-2xl">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-dark-border sticky top-0 bg-dark-card">
+          <h2 className="text-xl sm:text-2xl font-bold text-text-primary">{team.name} - Team Details</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-dark-card-hover rounded-lg transition-smooth"
@@ -288,8 +288,7 @@ const TeamDetailsModal = ({ team, onClose, onRefresh }) => {
             <FiX size={24} className="text-text-secondary" />
           </button>
         </div>
-
-        <div className="p-6 space-y-6">
+  <div className="p-4 sm:p-6 space-y-6">
           {team.description && (
             <div>
               <h3 className="text-sm font-semibold text-text-secondary mb-2">Description</h3>
@@ -301,7 +300,7 @@ const TeamDetailsModal = ({ team, onClose, onRefresh }) => {
             <h3 className="text-sm font-semibold text-text-secondary mb-4">Team Members ({members.length})</h3>
             <div className="space-y-3">
               {members.map(member => (
-                <div key={member.id} className="flex items-center justify-between p-3 bg-dark-card-hover rounded-lg">
+                <div key={member.id} className="flex items-center justify-between gap-3 p-3 bg-dark-card-hover rounded-lg">
                   <div>
                     <p className="font-medium text-text-primary">{member.name}</p>
                     <p className="text-xs text-text-secondary">{member.email}</p>
@@ -342,10 +341,10 @@ const CreateTeamModal = ({
   const leadCandidates = users.filter(u => u.role === 'employee');
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-card rounded-2xl max-w-2xl w-full border border-dark-border max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-dark-border sticky top-0 bg-dark-card">
-          <h2 className="text-2xl font-bold text-text-primary">
+    <div className="modal-shell">
+      <div className="modal-card max-w-2xl">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-dark-border sticky top-0 bg-dark-card">
+          <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
             {editingTeam ? 'Edit Team' : 'Create New Team'}
           </h2>
           <button
@@ -356,7 +355,7 @@ const CreateTeamModal = ({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="p-6 space-y-6">
+        <form onSubmit={onSubmit} className="p-4 sm:p-6 space-y-6">
           {/* Team Name */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
@@ -431,7 +430,7 @@ const CreateTeamModal = ({
           </div>
 
           {/* Submit Button */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="submit"
               className="flex-1 btn-primary"

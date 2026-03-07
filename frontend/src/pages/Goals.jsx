@@ -47,18 +47,18 @@ const Goals = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-text-secondary">Loading...</div>;
+    return <div className="page-shell text-center py-12 text-text-secondary">Loading...</div>;
   }
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12">
-      <h1 className="text-4xl font-bold text-text-primary mb-8">Goals</h1>
+    <div className="page-shell">
+      <h1 className="page-title mb-8">Goals</h1>
 
       {/* My Goals */}
       <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-text-primary">My Goals</h2>
-          <button onClick={() => setCreateGoalOpen(true)} className="btn-primary flex items-center gap-2">
+        <div className="page-header mb-6">
+          <h2 className="section-title">My Goals</h2>
+          <button onClick={() => setCreateGoalOpen(true)} className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center">
             <FiPlus size={18} />
             Create Goal
           </button>
@@ -78,9 +78,9 @@ const Goals = () => {
 
       {/* Team Goals */}
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-text-primary">Team Goals</h2>
-          <button onClick={() => setCreateTeamGoalOpen(true)} className="btn-primary flex items-center gap-2">
+        <div className="page-header mb-6">
+          <h2 className="section-title">Team Goals</h2>
+          <button onClick={() => setCreateTeamGoalOpen(true)} className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center">
             <FiPlus size={18} />
             Create Team Goal
           </button>

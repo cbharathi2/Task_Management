@@ -41,11 +41,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-sidebar via-dark-bg to-dark-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-dark-sidebar via-dark-bg to-dark-bg flex items-center justify-center p-4 sm:p-6">
       <div className="w-full max-w-md">
         <div className="card-base">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-accent-teal mb-2">✓ TaskFlow</h1>
+            <h1 className="text-3xl font-bold text-accent-teal mb-2">✓ SSA</h1>
             <p className="text-text-secondary">{isLogin ? 'Welcome back' : 'Create your account'}</p>
           </div>
 
@@ -58,7 +58,7 @@ const Login = () => {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+                    className="surface-input"
                     placeholder="Your name"
                     required
                   />
@@ -69,7 +69,7 @@ const Login = () => {
                   <select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+                    className="surface-input"
                   >
                     <option value="employee">Employee</option>
                     <option value="admin">Admin</option>
@@ -84,7 +84,7 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+                className="surface-input"
                 placeholder="your@email.com"
                 required
               />
@@ -96,7 +96,7 @@ const Login = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-dark-card border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+                className="surface-input"
                 placeholder="••••••••"
                 required
               />

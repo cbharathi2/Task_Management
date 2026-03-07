@@ -125,13 +125,13 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
                 {task.task_number ? `#${task.task_number} ` : ''}{task.title}
               </h3>
               {task.team_id && user?.role === 'employee' && (
-                <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-medium whitespace-nowrap">
+                <span className="px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded text-xs font-medium whitespace-nowrap">
                   👥 Team Task
                 </span>
               )}
             </div>
           </div>
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-smooth">
+          <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-smooth">
             {isAdmin && onEdit && (
               <button
                 onClick={onEdit}
@@ -243,7 +243,7 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
               <div className="mt-3 space-y-2">
                 {attachments.length > 0 ? (
                   attachments.map(attachment => (
-                    <div key={attachment.id} className="flex items-center justify-between p-2 bg-dark-card-hover rounded text-xs">
+                    <div key={attachment.id} className="flex items-center justify-between gap-2 p-2 bg-dark-card-hover rounded text-xs">
                       <span className="text-text-secondary truncate flex-1">{attachment.file_name}</span>
                       <div className="flex gap-1">
                         {attachment.file_type === 'application/pdf' && (
@@ -334,9 +334,9 @@ const PdfViewerModal = ({ attachment, onClose }) => {
   }, [attachment.id, token]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="modal-shell">
       <div className="bg-dark-card rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-dark-border flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-dark-border">
+        <div className="flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-dark-border">
           <h2 className="text-xl font-bold text-text-primary truncate">{attachment.file_name}</h2>
           <button
             onClick={onClose}

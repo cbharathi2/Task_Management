@@ -173,7 +173,7 @@ const MyTasks = () => {
   }));
 
   if (loading) {
-    return <div className="text-center py-12 text-text-secondary">Loading...</div>;
+    return <div className="page-shell text-center py-12 text-text-secondary">Loading...</div>;
   }
 
   const sections = [
@@ -186,19 +186,18 @@ const MyTasks = () => {
   ];
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-text-primary">My Tasks</h1>
+    <div className="page-shell">
+      <div className="page-header mb-6 sm:mb-8">
+        <h1 className="page-title">My Tasks</h1>
         {can('create', 'task') && (
-          <button onClick={() => setCreateTaskOpen(true)} className="btn-primary flex items-center gap-2">
+          <button onClick={() => setCreateTaskOpen(true)} className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center">
             <Plus size={18} />
             Create Task
           </button>
         )}
       </div>
 
-      {/* View Toggle */}
-      <div className="flex gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-8">
         {[
           { mode: 'list', icon: List, label: 'List View' },
           { mode: 'calendar', icon: Calendar, label: 'Calendar View' },
@@ -207,7 +206,7 @@ const MyTasks = () => {
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-smooth ${
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-smooth ${
               viewMode === mode ? 'btn-primary' : 'btn-secondary'
             }`}
           >
@@ -222,7 +221,7 @@ const MyTasks = () => {
         <div className="space-y-8">
           {/* My Tasks Section */}
           <div>
-            <h2 className="text-2xl font-bold text-text-primary mb-6 pb-4 border-b border-dark-border">📋 My Tasks</h2>
+            <h2 className="section-title mb-6 pb-4 border-b border-dark-border">📋 My Tasks</h2>
             <div className="space-y-8">
               {sections.map(({ key, label, empty }) => (
                 <div key={key} className="card-base">
@@ -249,7 +248,7 @@ const MyTasks = () => {
           {/* Tasks Assigned by Me (Admin Only) */}
           {user?.role === 'admin' && (
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-6 pb-4 border-b border-dark-border">📤 Tasks Assigned by Me</h2>
+              <h2 className="section-title mb-6 pb-4 border-b border-dark-border">📤 Tasks Assigned by Me</h2>
               {tasksAssignedByMe.length > 0 ? (
                 <div className="space-y-8">
                   {[

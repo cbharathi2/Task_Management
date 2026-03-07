@@ -59,18 +59,17 @@ const Home = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-text-secondary">Loading...</div>;
+    return <div className="page-shell text-center py-12 text-text-secondary">Loading...</div>;
   }
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12 space-y-8">
-      {/* Greeting */}
-      <div className="flex items-center justify-between">
+    <div className="page-shell space-y-6 sm:space-y-8">
+      <div className="page-header">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary mb-2">
+          <h1 className="page-title mb-2 leading-tight">
             Good morning, <span className="text-accent-teal">{user?.name || 'Admin'}</span> 👋
           </h1>
-          <p className="text-text-secondary">Let's make today productive</p>
+          <p className="text-text-secondary text-sm sm:text-base">Let's make today productive</p>
         </div>
         <NotificationIcon onRefresh={fetchData} />
       </div>
@@ -98,15 +97,15 @@ const Home = () => {
 
       {/* Main Grid */}
       {/* Projects & Goals */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
           {/* Active Projects */}
           <div className="card-base space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-semibold text-text-primary">Active Projects</h2>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h2 className="section-title">Active Projects</h2>
               {can('create', 'project') && (
                 <button
                   onClick={() => setCreateProjectOpen(true)}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary inline-flex items-center gap-2"
                 >
                   <FiPlus size={18} />
                 </button>
@@ -131,7 +130,7 @@ const Home = () => {
           {/* Completed Projects */}
           {projects.filter(p => p.status === 'Completed').length > 0 && (
             <div className="card-base space-y-4">
-              <h2 className="text-xl font-semibold text-text-primary mb-4">Completed Projects</h2>
+              <h2 className="section-title mb-2">Completed Projects</h2>
               {projects
                 .filter(p => p.status === 'Completed')
                 .map((project) => (
@@ -147,12 +146,12 @@ const Home = () => {
 
           {/* Goals */}
           <div className="card-base space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-semibold text-text-primary">My Goals</h2>
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <h2 className="section-title">My Goals</h2>
               {can('create', 'goal') && (
                 <button
                   onClick={() => setCreateGoalOpen(true)}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary inline-flex items-center gap-2"
                 >
                   <FiPlus size={18} />
                 </button>

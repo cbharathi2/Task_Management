@@ -30,8 +30,10 @@ export default {
         }
       },
       fontFamily: {
-        inter: ['Inter', 'sans-serif'],
-        poppins: ['Poppins', 'sans-serif'],
+        sans: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'Manrope', 'ui-sans-serif', 'sans-serif'],
+        inter: ['Manrope', 'sans-serif'],
+        poppins: ['Space Grotesk', 'sans-serif'],
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-in-out',

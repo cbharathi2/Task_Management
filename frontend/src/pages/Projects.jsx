@@ -32,18 +32,18 @@ const Projects = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-text-secondary">Loading...</div>;
+    return <div className="page-shell text-center py-12 text-text-secondary">Loading...</div>;
   }
 
   const activeProjects = projects.filter(p => p.status !== 'Completed');
   const completedProjects = projects.filter(p => p.status === 'Completed');
 
   return (
-    <div className="ml-64 pt-24 px-8 pb-12 space-y-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-text-primary">Projects</h1>
+    <div className="page-shell space-y-8">
+      <div className="page-header mb-8">
+        <h1 className="page-title">Projects</h1>
         {can('create', 'project') && (
-          <button onClick={() => setCreateProjectOpen(true)} className="btn-primary flex items-center gap-2">
+          <button onClick={() => setCreateProjectOpen(true)} className="btn-primary inline-flex items-center gap-2 w-full sm:w-auto justify-center">
             <FiPlus size={18} />
             Create Project
           </button>
@@ -52,7 +52,7 @@ const Projects = () => {
 
       {/* Active Projects */}
       <div>
-        <h2 className="text-2xl font-semibold text-text-primary mb-6">Active Projects</h2>
+        <h2 className="section-title mb-6">Active Projects</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activeProjects.length > 0 ? (
             activeProjects.map((project) => (
@@ -72,7 +72,7 @@ const Projects = () => {
       {/* Completed Projects */}
       {completedProjects.length > 0 && (
         <div>
-          <h2 className="text-2xl font-semibold text-text-primary mb-6">Completed Projects</h2>
+          <h2 className="section-title mb-6">Completed Projects</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedProjects.map((project) => (
               <ProjectCard 

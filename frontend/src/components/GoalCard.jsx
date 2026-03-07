@@ -69,7 +69,7 @@ const GoalCard = ({ goal, onEdit, onDelete, onRefresh, showCreator = false }) =>
             <p className="text-xs text-text-muted mt-1">By: {goal.owner_name}</p>
           )}
         </div>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           {onEdit && (
             <button
               onClick={(e) => {
