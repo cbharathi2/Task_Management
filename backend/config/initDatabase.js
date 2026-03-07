@@ -158,6 +158,13 @@ const initializeDatabase = async () => {
       // Column/constraint may already exist - this is fine
     }
 
+    // Add optional task_number field to tasks (for numbering within a project)
+    try {
+      await connection.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS task_number VARCHAR(255)`);
+    } catch (err) {
+      // ignore if already exists
+    }
+
     // Add team_id to goals
     try {
       await connection.query(`ALTER TABLE goals ADD COLUMN IF NOT EXISTS team_id INT`);
@@ -189,6 +196,51 @@ const initializeDatabase = async () => {
     } catch (err) {
       // Column/constraint may already exist - this is fine
     }
+
+    // Add project_comments table (for chat within a project)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS project_comments (
+        id SERIAL PRIMARY KEY,
+        project_id INT NOT NULL,
+        user_id INT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Project comments table created/verified');
+
+    // Add project_comment_replies table (for replies to comments)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS project_comment_replies (
+        id SERIAL PRIMARY KEY,
+        comment_id INT NOT NULL,
+        user_id INT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (comment_id) REFERENCES project_comments(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Project comment replies table created/verified');
+
+    // Add notifications table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        entity_type VARCHAR(50),
+        entity_id INT,
+        message TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ Notifications table created/verified');
 
     console.log('✅ Database schema initialized successfully');
     console.log('   ✓ All base tables created');

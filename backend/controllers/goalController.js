@@ -1,4 +1,6 @@
 const pool = require('../config/database');
+const { createNotification } = require('./notificationController');
+
 
 const createGoal = async (req, res) => {
   const { title, targetDate, goalType, teamId } = req.body;
@@ -37,7 +39,40 @@ const createGoal = async (req, res) => {
     );
 
     console.log(`✅ Goal created with ID: ${result.insertId}`);
+    const newGoalId = result.insertId;
     await connection.release();
+
+    // create notifications
+    try {
+      if (goalType === 'team' && teamId) {
+        // notify team members except creator
+        const conn2 = await pool.getConnection();
+        const [members] = await conn2.query('SELECT user_id FROM team_members WHERE team_id = ?', [teamId]);
+        await conn2.release();
+        for (const m of members) {
+          if (m.user_id !== ownerId) {
+            await createNotification({
+              userId: m.user_id,
+              type: 'goal',
+              entityType: 'goal',
+              entityId: newGoalId,
+              message: `A new team goal has been created: ${title}`
+            });
+          }
+        }
+      } else {
+        // personal goal - notify owner (could be useful for history)
+        await createNotification({
+          userId: ownerId,
+          type: 'goal',
+          entityType: 'goal',
+          entityId: newGoalId,
+          message: `Your new personal goal has been recorded: ${title}`
+        });
+      }
+    } catch (notifErr) {
+      console.error('❌ Error creating notification(s) for goal:', notifErr);
+    }
 
     res.status(201).json({
       message: 'Goal created successfully',

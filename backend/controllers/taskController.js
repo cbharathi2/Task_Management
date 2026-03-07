@@ -1,7 +1,9 @@
 const pool = require('../config/database');
+const { createNotification } = require('./notificationController');
+
 
 const createTask = async (req, res) => {
-  const { title, description, assignedTo, teamId, projectId, priority, dueDate } = req.body;
+  const { title, description, assignedTo, teamId, projectId, priority, dueDate, taskNumber } = req.body;
   const assignedBy = req.user.id;
 
   console.log('📝 Task controller received:', { title, description, assignedTo, teamId, projectId, priority, dueDate, assignedBy });
@@ -51,16 +53,51 @@ const createTask = async (req, res) => {
       }
     }
     
-    console.log('📝 Creating task:', { title, assignedTo, teamId, assignedBy, projectId, dueDate });
+    console.log('📝 Creating task:', { title, assignedTo, teamId, assignedBy, projectId, dueDate, taskNumber });
     
     const [result] = await connection.query(
-      'INSERT INTO tasks (title, description, assigned_to, team_id, assigned_by, project_id, priority, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description || '', assignedTo || null, teamId || null, assignedBy, projectId || null, priority || 'Medium', dueDate || null, 'To-Do']
+      'INSERT INTO tasks (title, description, assigned_to, team_id, assigned_by, project_id, priority, due_date, status, task_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, description || '', assignedTo || null, teamId || null, assignedBy, projectId || null, priority || 'Medium', dueDate || null, 'To-Do', taskNumber || null]
     );
 
     console.log(`✅ Task created with ID: ${result.insertId}, assigned to ${assignedTo ? `user ${assignedTo}` : `team ${teamId}`}`);
 
+    const newTaskId = result.insertId;
+
     await connection.release();
+
+    // generate notifications
+    try {
+      if (assignedTo) {
+        if (assignedTo !== assignedBy) {
+          await createNotification({
+            userId: assignedTo,
+            type: 'task',
+            entityType: 'task',
+            entityId: newTaskId,
+            message: `You have been assigned a new task: ${title}`
+          });
+        }
+      } else if (teamId) {
+        // notify each team member except the creator
+        const conn2 = await pool.getConnection();
+        const [members] = await conn2.query('SELECT user_id FROM team_members WHERE team_id = ?', [teamId]);
+        await conn2.release();
+        for (const m of members) {
+          if (m.user_id !== assignedBy) {
+            await createNotification({
+              userId: m.user_id,
+              type: 'task',
+              entityType: 'task',
+              entityId: newTaskId,
+              message: `New task assigned to your team: ${title}`
+            });
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('❌ Error creating notification(s) for task:', notifErr);
+    }
 
     res.status(201).json({
       message: 'Task created successfully',
@@ -88,7 +125,7 @@ const getMyTasks = async (req, res) => {
     
     // Get tasks directly assigned to user OR assigned to teams user belongs to
     const [tasks] = await connection.query(
-      `SELECT DISTINCT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.assigned_to, t.team_id, t.assigned_by, t.project_id, t.created_at, t.updated_at,
+      `SELECT DISTINCT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.assigned_to, t.team_id, t.assigned_by, t.project_id, t.task_number, t.created_at, t.updated_at,
               u.name as assigned_to_name, tm.name as team_name, p.order_number as project_order_number, p.name as project_name
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
@@ -125,7 +162,7 @@ const getTasksAssignedByMe = async (req, res) => {
     console.log(`📤 Fetching tasks assigned by user ${userId}`);
     
     const [tasks] = await connection.query(
-      `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.assigned_to, t.team_id, t.assigned_by, t.project_id, t.created_at, t.updated_at,
+      `SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.assigned_to, t.team_id, t.assigned_by, t.project_id, t.task_number, t.created_at, t.updated_at,
               u.name as assigned_to_name, tm.name as team_name, p.order_number as project_order_number, p.name as project_name
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
@@ -171,7 +208,7 @@ const updateTask = async (req, res) => {
     }
     
     // Build dynamic query based on what's being updated
-    const allowedFields = ['title', 'description', 'priority', 'status', 'due_date', 'assigned_to'];
+    const allowedFields = ['title', 'description', 'priority', 'status', 'due_date', 'assigned_to', 'task_number', 'team_id', 'project_id'];
     const fields = Object.keys(updates)
       .filter(key => allowedFields.includes(key))
       .map(key => `${key} = ?`);
@@ -285,11 +322,10 @@ const getDashboardStats = async (req, res) => {
       [...params, nextWeekEnd]
     );
 
-    // Completion status for upcoming month
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Completion status for all tasks
     const [statusStats] = await connection.query(
-      `SELECT t.status, COUNT(DISTINCT t.id) as count FROM tasks t ${joinClause} WHERE ${whereClause} AND t.due_date BETWEEN NOW() AND ? GROUP BY t.status`,
-      [...params, nextMonth]
+      `SELECT t.status, COUNT(DISTINCT t.id) as count FROM tasks t ${joinClause} WHERE ${whereClause} GROUP BY t.status`,
+      params
     );
 
     // Task completion trend (last 30 days)
@@ -311,7 +347,7 @@ const getDashboardStats = async (req, res) => {
         doTodayCount: doToday[0]?.count || 0,
         doNextWeekCount: doNextWeek[0]?.count || 0,
         doLaterCount: doLater[0]?.count || 0,
-        completionStatusUpcomingMonth: statusStats || [],
+        completionStatusAll: statusStats || [],
         taskCompletionOverTime: trendData || []
       }
     });

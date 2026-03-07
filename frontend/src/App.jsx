@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
+
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Home from './pages/Home';
@@ -47,7 +49,9 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

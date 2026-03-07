@@ -4,9 +4,11 @@ import { goalService } from '../../services/goalService';
 import { fileService } from '../../services/fileService';
 import { teamService } from '../../services/teamService';
 import { AuthContext } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 const CreateGoalModal = ({ isOpen, onClose, goalType = 'personal', isTeamGoal = false, onGoalCreated, onSuccess }) => {
   const { user } = useContext(AuthContext);
+  const { refreshNotifications } = useNotifications();
   const isTeam = isTeamGoal || goalType === 'team';
   const [formData, setFormData] = useState({
     title: '',
@@ -129,6 +131,7 @@ const CreateGoalModal = ({ isOpen, onClose, goalType = 'personal', isTeamGoal = 
       if (onSuccess) {
         onSuccess();
       }
+      refreshNotifications();
       handleClose();
     } catch (err) {
       console.error('❌ Goal creation error:', err);

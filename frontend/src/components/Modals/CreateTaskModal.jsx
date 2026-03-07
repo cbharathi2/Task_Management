@@ -5,17 +5,20 @@ import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
 import { fileService } from "../../services/fileService";
 import { AuthContext } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 
-const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
+const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated, project, task }) => {
   const { user } = useContext(AuthContext);
+  const isEditMode = !!task;
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    projectId: (projects && projects.length > 0) ? projects[0].id : '',
-    assignedTo: '',
-    teamId: '',
-    priority: 'Medium',
-    dueDate: '',
+    title: task?.title || '',
+    description: task?.description || '',
+    projectId: task?.project_id || (project ? project.id : (projects && projects.length > 0 ? projects[0].id : '')),
+    taskNumber: task?.task_number || '',
+    assignedTo: task?.assigned_to ? String(task.assigned_to) : '',
+    teamId: task?.team_id ? String(task.team_id) : '',
+    priority: task?.priority || 'Medium',
+    dueDate: task?.due_date ? task.due_date.split('T')[0] : '',
   });
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -33,6 +36,56 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
     }
   }, [isOpen]);
 
+  // Auto-select first user/team when they load (for new tasks only)
+  useEffect(() => {
+    if (!isEditMode && isOpen) {
+      if (assignmentType === 'user' && users.length > 0 && !formData.assignedTo) {
+        setFormData(prev => ({
+          ...prev,
+          assignedTo: String(users[0].id)
+        }));
+      } else if (assignmentType === 'team' && teams.length > 0 && !formData.teamId) {
+        setFormData(prev => ({
+          ...prev,
+          teamId: String(teams[0].id)
+        }));
+      }
+    }
+  }, [users, teams, assignmentType, isOpen, isEditMode]);
+
+  // populate form when editing an existing task
+  useEffect(() => {
+    if (isOpen && isEditMode && task) {
+      setFormData({
+        title: task.title || '',
+        description: task.description || '',
+        projectId: task.project_id || (project ? project.id : (projects && projects.length > 0 ? projects[0].id : '')),
+        taskNumber: task.task_number || '',
+        assignedTo: task.assigned_to ? String(task.assigned_to) : '',
+        teamId: task.team_id ? String(task.team_id) : '',
+        priority: task.priority || 'Medium',
+        dueDate: task.due_date ? task.due_date.split('T')[0] : '',
+      });
+      // set assignment type based on existing task
+      if (task.assigned_to) setAssignmentType('user');
+      else if (task.team_id) setAssignmentType('team');
+    }
+    if (isOpen && !isEditMode) {
+      // ensure defaults for create mode
+      setFormData(prev => ({
+        ...prev,
+        projectId: project ? project.id : projects[0]?.id || prev.projectId,
+      }));
+    }
+  }, [isOpen, isEditMode, task, project, projects]);
+
+  // when project prop changes, update default projectId
+  useEffect(() => {
+    if (project) {
+      setFormData(prev => ({ ...prev, projectId: project.id }));
+    }
+  }, [project]);
+
   const fetchUsers = async () => {
     try {
       const response = await authService.getUsers();
@@ -42,13 +95,6 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
         userList = userList.filter(u => u.role === 'employee');
       }
       setUsers(userList);
-      // Set first user as default assigned to
-      if (userList && userList.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          assignedTo: String(userList[0].id)
-        }));
-      }
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -59,13 +105,6 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
       const response = await teamService.getTeams();
       const allTeams = response.data.teams || [];
       setTeams(allTeams);
-      // Set first team as default if available
-      if (allTeams.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          teamId: String(allTeams[0].id)
-        }));
-      }
     } catch (error) {
       console.error('Error fetching teams:', error);
       setTeams([]);
@@ -102,6 +141,8 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const { refreshNotifications } = useNotifications();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -109,6 +150,7 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
 
     try {
       console.log('📝 Creating task with data:', formData);
+      console.log('📝 Assignment type:', assignmentType);
 
       // Validate assignment
       if (assignmentType === 'user') {
@@ -128,23 +170,31 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
       const taskData = {
         title: formData.title,
         description: formData.description,
-        projectId: formData.projectId ? parseInt(formData.projectId) : null,
         priority: formData.priority,
         dueDate: formData.dueDate,
+        taskNumber: formData.taskNumber || null,
+        projectId: formData.projectId ? parseInt(formData.projectId) : null,
       };
 
-      // Add assignment based on type
+      // Add assignment based on type - use camelCase for POST/create
       if (assignmentType === 'user') {
         taskData.assignedTo = parseInt(formData.assignedTo);
-      } else {
+      } else if (assignmentType === 'team') {
         taskData.teamId = parseInt(formData.teamId);
       }
 
-      console.log('📤 Sending taskData:', JSON.stringify(taskData, null, 2));
-      const taskResponse = await taskService.createTask(taskData);
-
-      const taskId = taskResponse.data.taskId;
-      console.log('✅ Task created with ID:', taskId, 'Response:', taskResponse.data);
+      console.log('📤 Final taskData being sent:', JSON.stringify(taskData, null, 2));
+      let taskResponse;
+      let taskId;
+      if (isEditMode) {
+        taskResponse = await taskService.updateTask(task.id, taskData);
+        taskId = task.id;
+        console.log('✅ Task updated:', taskResponse.data);
+      } else {
+        taskResponse = await taskService.createTask(taskData);
+        taskId = taskResponse.data.taskId;
+        console.log('✅ Task created with ID:', taskId, 'Response:', taskResponse.data);
+      }
 
       if (attachments.length > 0) {
         console.log('📂 Uploading', attachments.length, 'attachments...');
@@ -167,8 +217,9 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
       }
 
       console.log('✅ Task and attachments created successfully');
-      alert('Task created successfully!');
+      alert(isEditMode ? 'Task updated successfully!' : 'Task created successfully!');
       onTaskCreated();
+      refreshNotifications();
       handleClose();
     } catch (err) {
       console.error('❌ Error creating task:', err);
@@ -185,7 +236,8 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
     setFormData({
       title: '',
       description: '',
-      projectId: projects[0]?.id || '',
+      projectId: project ? project.id : projects[0]?.id || '',
+      taskNumber: '',
       priority: 'Medium',
       dueDate: '',
     });
@@ -200,7 +252,7 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-dark-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-dark-border">
         <div className="flex items-center justify-between p-6 border-b border-dark-border sticky top-0 bg-dark-card">
-          <h2 className="text-2xl font-bold text-text-primary">Create New Task</h2>
+          <h2 className="text-2xl font-bold text-text-primary">{isEditMode ? 'Edit Task' : 'Create New Task'}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-dark-card-hover rounded-lg transition-smooth"
@@ -245,25 +297,40 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
             />
           </div>
 
+              {!project && (
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Project *
+              </label>
+              <select
+                name="projectId"
+                value={formData.projectId}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
+              >
+                {projects && projects.map((proj) => (
+                  <option key={proj.id} value={proj.id}>
+                    {proj.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
-              Project *
+              Task Number
             </label>
-            <select
-              name="projectId"
-              value={formData.projectId}
+            <input
+              type="text"
+              name="taskNumber"
+              value={formData.taskNumber}
               onChange={handleInputChange}
-              required
+              placeholder="e.g. 1, A-101"
               className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-text-primary focus:border-accent-teal focus:outline-none transition-smooth"
-            >
-              {projects && projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
               Assign To *
@@ -448,7 +515,7 @@ const CreateTaskModal = ({ isOpen, onClose, projects, onTaskCreated }) => {
               disabled={loading || !formData.title}
               className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Task'}
+              {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Task' : 'Create Task')}
             </button>
           </div>
         </form>

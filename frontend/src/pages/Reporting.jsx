@@ -46,11 +46,12 @@ const Reporting = () => {
     );
   }
 
-  const completionStatusData = Array.isArray(stats.completionStatusUpcomingMonth) && stats.completionStatusUpcomingMonth.length > 0
-    ? stats.completionStatusUpcomingMonth
+  const completionStatusData = Array.isArray(stats.completionStatusAll) && stats.completionStatusAll.length > 0
+    ? stats.completionStatusAll
     : [
-        { status: 'Completed', count: stats.totalCompleted || 0 },
+        { status: 'To-Do', count: 0 },
         { status: 'In Progress', count: Math.max(0, (stats.totalIncomplete || 0) - (stats.totalOverdue || 0)) },
+        { status: 'Completed', count: stats.totalCompleted || 0 },
         { status: 'Overdue', count: stats.totalOverdue || 0 },
       ];
 

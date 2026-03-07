@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 
 const createProject = async (req, res) => {
-  const { name, description, orderNumber } = req.body;
+  const { name, description, order_number } = req.body;
   const createdBy = req.user.id;
 
   // Only admins can create projects
@@ -9,7 +9,7 @@ const createProject = async (req, res) => {
     return res.status(403).json({ message: 'Only admins can create projects' });
   }
 
-  if (!orderNumber || orderNumber.trim() === '') {
+  if (!order_number || order_number.trim() === '') {
     return res.status(400).json({ message: 'Order number is required' });
   }
 
@@ -22,7 +22,7 @@ const createProject = async (req, res) => {
     
     const [result] = await connection.query(
       'INSERT INTO projects (name, description, order_number, created_by) VALUES (?, ?, ?, ?)',
-      [name, description, orderNumber, createdBy]
+      [name, description, order_number, createdBy]
     );
 
     await connection.release();
@@ -72,7 +72,7 @@ const updateProject = async (req, res) => {
     const connection = await pool.getConnection();
     
     // Build dynamic query based on what's being updated
-    const allowedFields = ['name', 'description', 'status'];
+    const allowedFields = ['name', 'description', 'status', 'order_number'];
     const fields = Object.keys(updates)
       .filter(key => allowedFields.includes(key))
       .map(key => `${key} = ?`);
@@ -135,9 +135,33 @@ const deleteProject = async (req, res) => {
   }
 };
 
+
+// Fetch tasks belonging to a specific project
+const getProjectTasks = async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    const connection = await pool.getConnection();
+    const [tasks] = await connection.query(
+      `SELECT t.*, u.name as assigned_to_name, tm.name as team_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assigned_to = u.id
+       LEFT JOIN teams tm ON t.team_id = tm.id
+       WHERE t.project_id = ?
+       ORDER BY t.task_number IS NULL, t.task_number, t.created_at ASC`,
+      [projectId]
+    );
+    await connection.release();
+    res.json({ tasks: tasks || [] });
+  } catch (err) {
+    console.error('❌ Error fetching tasks for project', projectId, err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 module.exports = {
   createProject,
   getAllProjects,
   updateProject,
-  deleteProject
+  deleteProject,
+  getProjectTasks
 };

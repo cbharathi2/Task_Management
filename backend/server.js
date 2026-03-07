@@ -7,6 +7,7 @@ const taskRoutes = require('./routes/task');
 const goalRoutes = require('./routes/goal');
 const projectRoutes = require('./routes/projects');
 const fileRoutes = require('./routes/files');
+const notificationRoutes = require('./routes/notifications');
 const teamRoutes = require('./routes/teams');
 const initializeDatabase = require('./config/initDatabase');
 
@@ -21,6 +22,7 @@ const getAllowedOrigins = () => {
     'https://task-management-wzap.vercel.app',
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://localhost:5174'
   ];
   
   const envOrigins = (process.env.CORS_ORIGINS || '')
@@ -102,6 +104,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler for undefined routes
 app.use((req, res) => {

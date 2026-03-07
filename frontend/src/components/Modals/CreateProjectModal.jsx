@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FiX, FiUpload, FiTrash2 } from 'react-icons/fi';
 import api from '../../services/api';
 import { fileService } from '../../services/fileService';
 
-const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
+const CreateProjectModal = ({ isOpen, onClose, onProjectCreated, project }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,6 +20,10 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
       ...prev,
       [name]: value,
     }));
+    // Clear error when user starts typing
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -50,71 +54,76 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     setError(null);
 
     // Validate required fields
-    if (!formData.name.trim()) {
+    console.log('📝 Form data before validation:', formData);
+    if (!formData.name || !formData.name.trim()) {
       setError('Project name is required');
       setLoading(false);
       return;
     }
 
-    if (!formData.orderNumber.trim()) {
+    if (!formData.orderNumber || !formData.orderNumber.trim()) {
+      console.error('❌ Order number validation failed:', { orderNumber: formData.orderNumber, isEmpty: !formData.orderNumber, isTrimmedEmpty: !formData.orderNumber?.trim() });
       setError('Order number is required');
       setLoading(false);
       return;
     }
 
     try {
-      console.log('📝 Creating project with data:', formData);
+      const projectPayload = {
+        name: formData.name,
+        description: formData.description,
+        order_number: formData.orderNumber,
+      };
 
-      const projectResponse = await api.post('/projects', formData);
-      console.log('📦 API Response:', projectResponse.data);
-      
-      const projectId = projectResponse.data.projectId;
-      
-      if (!projectId) {
-        console.error('❌ No projectId in response:', projectResponse.data);
-        setError('Failed to create project: Invalid server response');
-        setLoading(false);
-        return;
-      }
+      if (project) {
+        console.log('📝 Updating project', project.id, 'data:', projectPayload);
+        await api.put(`/projects/${project.id}`, projectPayload);
+        alert('Project updated successfully!');
+      } else {
+        console.log('📝 Creating project with data:', projectPayload);
+        const projectResponse = await api.post('/projects', projectPayload);
+        console.log('📦 API Response:', projectResponse.data);
 
-      console.log('✅ Project created with ID:', projectId);
+        const projectId = projectResponse.data.projectId;
+        if (!projectId) {
+          throw new Error('Invalid response from server');
+        }
 
-      // Upload attachments
-      if (attachments.length > 0) {
-        console.log('📂 Uploading', attachments.length, 'attachments...');
-        for (const file of attachments) {
-          try {
-            await fileService.uploadFile(file, 'project', projectId);
-            console.log('✅ File uploaded:', file.name);
-          } catch (fileError) {
-            console.error('⚠️  Error uploading file:', file.name, fileError);
-            // Don't fail the whole process if file upload fails
+        // Upload attachments if any
+        if (attachments.length > 0) {
+          console.log('📂 Uploading', attachments.length, 'attachments...');
+          for (const file of attachments) {
+            try {
+              await fileService.uploadFile(file, 'project', projectId);
+              console.log('✅ File uploaded:', file.name);
+            } catch (fileError) {
+              console.error('⚠️  Error uploading file:', file.name, fileError);
+              // Don't fail the whole process if file upload fails
+            }
           }
         }
+
+        console.log('✅ Project created successfully');
+        setLoading(false);
+        alert('Project created successfully!');
       }
 
-      console.log('✅ Project created successfully');
-      setLoading(false);
-      alert('Project created successfully!');
-      
       // Refresh projects list
       try {
         await onProjectCreated();
       } catch (refreshError) {
         console.error('⚠️  Error refreshing projects list:', refreshError);
-        // Still close the modal even if refresh fails
       }
-      
       handleClose();
-      return; // Exit after successful creation
+      return; // Exit after success
     } catch (err) {
-      console.error('❌ Error creating project:', err);
+      console.error('❌ Error creating/updating project:', err);
       console.error('Error details:', {
         status: err.response?.status,
         data: err.response?.data,
         message: err.message
       });
-      
+
       // Handle specific error responses
       if (err.response?.status === 403) {
         setError('You do not have permission to create projects. Only admins can create projects.');
@@ -139,6 +148,28 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     onClose();
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      // Clear any previous errors when modal opens
+      setError(null);
+      if (project) {
+        // Editing existing project
+        setFormData({
+          name: project.name || '',
+          description: project.description || '',
+          orderNumber: project.order_number || '',
+        });
+      } else {
+        // Creating new project - reset form
+        setFormData({
+          name: '',
+          description: '',
+          orderNumber: '',
+        });
+      }
+    }
+  }, [project, isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -146,7 +177,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
       <div className="bg-dark-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-dark-border">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-dark-border sticky top-0 bg-dark-card">
-          <h2 className="text-2xl font-bold text-text-primary">Create New Project</h2>
+          <h2 className="text-2xl font-bold text-text-primary">{project ? 'Edit Project' : 'Create New Project'}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-dark-card-hover rounded-lg transition-smooth"
@@ -275,7 +306,7 @@ const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
               disabled={loading || !formData.name}
               className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Project'}
+              {loading ? (project ? 'Updating...' : 'Saving...') : project ? 'Update Project' : 'Create Project'}
             </button>
           </div>
         </form>

@@ -1,12 +1,13 @@
 import React, { useState, useContext, useEffect } from 'react';
 import StatusBadge from './StatusBadge';
-import { FiTrash2, FiEdit2, FiCheck, FiDownload, FiEye } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiCheck, FiDownload, FiEye, FiPlayCircle } from 'react-icons/fi';
 import { taskService } from '../services/taskService';
 import { fileService } from '../services/fileService';
 import { AuthContext } from '../context/AuthContext';
 
 const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) => {
   const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === 'admin';
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [showAttachments, setShowAttachments] = useState(false);
@@ -47,6 +48,8 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
     }
   };
 
+  const isOwner = user?.role === 'admin' || user?.id === task.assigned_to;
+
   const handleMarkComplete = async () => {
     if (task.status === 'Completed') return;
     
@@ -56,6 +59,19 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
       if (onRefresh) onRefresh();
     } catch (error) {
       console.error('Error marking task as complete:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkInProgress = async () => {
+    if (task.status !== 'To-Do') return;
+    try {
+      setLoading(true);
+      await taskService.updateTask(task.id, { status: 'In Progress' });
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error('Error marking task in progress:', error);
     } finally {
       setLoading(false);
     }
@@ -106,7 +122,7 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-text-primary group-hover:text-accent-teal transition-smooth">
-                {task.title}
+                {task.task_number ? `#${task.task_number} ` : ''}{task.title}
               </h3>
               {task.team_id && user?.role === 'employee' && (
                 <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-medium whitespace-nowrap">
@@ -116,7 +132,16 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
             </div>
           </div>
           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-smooth">
-            {user?.role === 'admin' && onDelete && (
+            {isAdmin && onEdit && (
+              <button
+                onClick={onEdit}
+                className="p-1.5 hover:bg-dark-card-hover rounded transition-smooth"
+                title="Edit task"
+              >
+                <FiEdit2 size={16} className="text-yellow-400" />
+              </button>
+            )}
+            {isAdmin && onDelete && (
               <button
                 onClick={handleDelete}
                 className="p-1.5 hover:bg-dark-card-hover rounded transition-smooth"
@@ -133,12 +158,14 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
         </p>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-text-muted">Project Order No</span>
-            <span className="px-2 py-1 bg-accent-teal/10 text-accent-teal rounded text-xs font-medium">
-              {projectOrderNo || 'Loading...'}
-            </span>
-          </div>
+          {task.project_id && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-text-muted">Project Order No</span>
+              <span className="px-2 py-1 bg-accent-teal/10 text-accent-teal rounded text-xs font-medium">
+                {projectOrderNo || 'Loading...'}
+              </span>
+            </div>
+          )}
 
           {!showAssignee && (
             <div className="flex items-center justify-between">
@@ -153,7 +180,17 @@ const TaskCard = ({ task, onEdit, onDelete, onRefresh, showAssignee = false }) =
             <span className="text-xs text-text-muted">Status</span>
             <div className="flex items-center gap-2">
               <StatusBadge status={isOverdue ? 'Overdue' : task.status} />
-              {task.status !== 'Completed' && (
+              {isOwner && task.status === 'To-Do' && (
+                <button
+                  onClick={handleMarkInProgress}
+                  disabled={loading}
+                  className="p-1.5 hover:bg-yellow-500/10 rounded transition-smooth disabled:opacity-50"
+                  title="Mark in progress"
+                >
+                  <FiPlayCircle size={16} className="text-yellow-400" />
+                </button>
+              )}
+              {isOwner && task.status !== 'Completed' && (
                 <button
                   onClick={handleMarkComplete}
                   disabled={loading}
