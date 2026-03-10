@@ -221,7 +221,7 @@ const ProjectCard = ({ project, onDelete, onStatusChange, isCompleted }) => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {user?.role === 'employee' && !isCompleted && (
+          {(user?.role === 'employee' || user?.role === 'admin') && !isCompleted && (
             <button
               onClick={handleMarkComplete}
               className="p-1.5 hover:bg-green-500/10 rounded transition-smooth text-green-400 hover:text-green-300"

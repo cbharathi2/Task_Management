@@ -8,6 +8,24 @@ const NotificationIcon = ({ onRefresh }) => {
   const [open, setOpen] = useState(false);
   const panelRef = useRef();
 
+  const formatIndianDateTime = (value) => {
+    if (!value) return 'Date unavailable';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Date unavailable';
+
+    return date.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  };
+
   useEffect(() => {
     if (open) {
       refreshNotifications();
@@ -64,7 +82,7 @@ const NotificationIcon = ({ onRefresh }) => {
               <div key={n.id} className="flex items-start justify-between gap-2 p-2 bg-dark-card-hover rounded-lg">
                 <div className="flex-1">
                   <p className="text-sm text-text-primary">{n.message || n.type}</p>
-                  <p className="text-xs text-text-secondary">{new Date(n.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-text-secondary">{formatIndianDateTime(n.created_at)}</p>
                 </div>
                 <button onClick={() => handleDelete(n.id)} className="p-1 rounded hover:bg-dark-border/40">
                   <FiX size={14} />
