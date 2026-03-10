@@ -46,14 +46,55 @@ const Reporting = () => {
     );
   }
 
-  const completionStatusData = Array.isArray(stats.completionStatusAll) && stats.completionStatusAll.length > 0
-    ? stats.completionStatusAll
-    : [
-        { status: 'To-Do', count: 0 },
-        { status: 'In Progress', count: Math.max(0, (stats.totalIncomplete || 0) - (stats.totalOverdue || 0)) },
-        { status: 'Completed', count: stats.totalCompleted || 0 },
-        { status: 'Overdue', count: stats.totalOverdue || 0 },
-      ];
+  const buildCompletionStatusData = (reportStats) => {
+    const sourceData = Array.isArray(reportStats?.completionStatusAll) && reportStats.completionStatusAll.length > 0
+      ? reportStats.completionStatusAll
+      : Array.isArray(reportStats?.completionStatusUpcomingMonth)
+        ? reportStats.completionStatusUpcomingMonth
+        : [];
+
+    // Keep status keys stable for chart colors and labels.
+    const normalizedMap = new Map();
+    sourceData.forEach((item) => {
+      const rawStatus = String(item?.status || item?.name || '').trim();
+      const normalizedKey = rawStatus.toLowerCase();
+      const count = Number(item?.count ?? item?.value ?? item?.total ?? 0);
+
+      if (!rawStatus || Number.isNaN(count)) {
+        return;
+      }
+
+      let statusLabel = rawStatus;
+      if (normalizedKey === 'todo' || normalizedKey === 'to-do' || normalizedKey === 'to do' || normalizedKey === 'pending') {
+        statusLabel = 'To-Do';
+      } else if (normalizedKey === 'in progress' || normalizedKey === 'in-progress' || normalizedKey === 'inprogress') {
+        statusLabel = 'In Progress';
+      } else if (normalizedKey === 'completed' || normalizedKey === 'done') {
+        statusLabel = 'Completed';
+      }
+
+      normalizedMap.set(statusLabel, (normalizedMap.get(statusLabel) || 0) + count);
+    });
+
+    if (normalizedMap.size > 0) {
+      if (normalizedMap.has('Overdue')) {
+        normalizedMap.set('Overdue', Number(reportStats?.totalOverdue ?? normalizedMap.get('Overdue') ?? 0));
+      } else if (Number(reportStats?.totalOverdue || 0) > 0) {
+        normalizedMap.set('Overdue', Number(reportStats.totalOverdue));
+      }
+
+      return Array.from(normalizedMap.entries()).map(([status, count]) => ({ status, count }));
+    }
+
+    return [
+      { status: 'To-Do', count: 0 },
+      { status: 'In Progress', count: Math.max(0, (reportStats.totalIncomplete || 0) - (reportStats.totalOverdue || 0)) },
+      { status: 'Completed', count: reportStats.totalCompleted || 0 },
+      { status: 'Overdue', count: reportStats.totalOverdue || 0 },
+    ];
+  };
+
+  const completionStatusData = buildCompletionStatusData(stats);
 
   return (
     <div className="page-shell">

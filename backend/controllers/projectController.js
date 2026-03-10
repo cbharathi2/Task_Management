@@ -142,10 +142,11 @@ const getProjectTasks = async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [tasks] = await connection.query(
-      `SELECT t.*, u.name as assigned_to_name, tm.name as team_name
+      `SELECT t.*, u.name as assigned_to_name, tm.name as team_name, p.order_number as project_order_number
        FROM tasks t
        LEFT JOIN users u ON t.assigned_to = u.id
        LEFT JOIN teams tm ON t.team_id = tm.id
+       LEFT JOIN projects p ON t.project_id = p.id
        WHERE t.project_id = ?
        ORDER BY t.task_number IS NULL, t.task_number, t.created_at ASC`,
       [projectId]

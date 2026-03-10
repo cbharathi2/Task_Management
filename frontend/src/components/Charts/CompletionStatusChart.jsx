@@ -5,8 +5,8 @@ const CompletionStatusChart = ({ data }) => {
   const safeData = Array.isArray(data) ? data : [];
 
   const chartData = safeData.map((item) => ({
-    name: item.status,
-    value: item.count,
+    name: item.status || item.name || 'Unknown',
+    value: Number(item.count ?? item.value ?? 0),
   }));
 
   const COLORS = {
